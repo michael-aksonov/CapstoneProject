@@ -1,6 +1,5 @@
 project:
   title: "CapstoneProject"
   theme: cosmo
-  output-dir: docs
 
 editor: visual
