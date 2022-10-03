@@ -1,6 +1,6 @@
 ---
 title: "Capstone Project"
-author: "Mykhailo Aksonov - Yevhenia Mitriakhina - Daniil Minakov - Iryna Pavliuk"
+author: "Mykhailo Aksonov - Yevhenia Mitriakhina - Daniil Minakov - Iryna Pavliuk - Iryna Pavliuk"
 format:
   revealjs:
     navigation-mode: linear
@@ -31,7 +31,7 @@ ln(c)=\alpha_0+\sum_i \alpha_i w_i + \alpha_y ln(y)
 
 ::: {.footer style="height:55px;background-color:lightgray;z-index:-1;bottom:0%"}
 ::: footer
-Mykhailo Aksonov - Yevhenia Mitriakhina - Daniil Minakov
+Mykhailo Aksonov - Yevhenia Mitriakhina - Daniil Minakov - Iryna Pavliuk
 :::
 :::
 
@@ -53,7 +53,7 @@ Marginal costs are then derived as: \begin{gather*}
 
 ::: {.footer style="height:55px;background-color:lightgray;z-index:-1;bottom:0%"}
 ::: footer
-Mykhailo Aksonov - Yevhenia Mitriakhina - Daniil Minakov
+Mykhailo Aksonov - Yevhenia Mitriakhina - Daniil Minakov - Iryna Pavliuk
 :::
 :::
 
@@ -99,7 +99,7 @@ Whehe $Q$ is quantity in tkm, $l$ are costs of labor, $u$ are costs of utilities
 
 ::: {.footer style="height:55px;background-color:lightgray;z-index:-1;bottom:0%"}
 ::: footer
-Mykhailo Aksonov - Yevhenia Mitriakhina - Daniil Minakov
+Mykhailo Aksonov - Yevhenia Mitriakhina - Daniil Minakov - Iryna Pavliuk
 :::
 :::
 
@@ -276,7 +276,7 @@ ggplot(railway_data[railway_data$railway_name=="SOUTHERN_RAILWAYS",],mapping=aes
 
 ::: {.footer style="height:55px;background-color:lightgray;z-index:-1;bottom:0%"}
 ::: footer
-Mykhailo Aksonov - Yevhenia Mitriakhina - Daniil Minakov
+Mykhailo Aksonov - Yevhenia Mitriakhina - Daniil Minakov - Iryna Pavliuk
 :::
 :::
 
@@ -306,6 +306,13 @@ ggplot(railway_data[railway_data$railway_name=="SOUTHERN_RAILWAYS",],mapping=aes
   
 
 ```
+:::
+
+
+::: {.footer style="height:55px;background-color:lightgray;z-index:-1;bottom:0%"}
+::: footer
+Mykhailo Aksonov - Yevhenia Mitriakhina - Daniil Minakov - Iryna Pavliuk
+:::
 :::
 
 ------------------------------------------------------------------------
@@ -481,7 +488,7 @@ ggplot(railway_data[railway_data$railway_name=="SOUTHERN_RAILWAYS",],mapping=aes
 
 ::: {.footer style="height:55px;background-color:lightgray;z-index:-1;bottom:0%"}
 ::: footer
-Mykhailo Aksonov - Yevhenia Mitriakhina - Daniil Minakov
+Mykhailo Aksonov - Yevhenia Mitriakhina - Daniil Minakov - Iryna Pavliuk
 :::
 :::
 
@@ -652,7 +659,7 @@ ggplot(railway_data[railway_data$railway_name=="SOUTHERN_RAILWAYS",],mapping=aes
 
 ::: {.footer style="height:55px;background-color:lightgray;z-index:-1;bottom:0%"}
 ::: footer
-Mykhailo Aksonov - Yevhenia Mitriakhina - Daniil Minakov
+Mykhailo Aksonov - Yevhenia Mitriakhina - Daniil Minakov - Iryna Pavliuk
 :::
 :::
 
@@ -694,7 +701,7 @@ As we can see, all coefficients sum to 1, but this has to be checked
 
 ::: {.footer style="height:55px;background-color:lightgray;z-index:-1;bottom:0%"}
 ::: footer
-Mykhailo Aksonov - Yevhenia Mitriakhina - Daniil Minakov
+Mykhailo Aksonov - Yevhenia Mitriakhina - Daniil Minakov - Iryna Pavliuk
 :::
 :::
 
@@ -722,7 +729,7 @@ We fail to reject the null, so our coefficients are OK.
 
 ::: {.footer style="height:55px;background-color:lightgray;z-index:-1;bottom:0%"}
 ::: footer
-Mykhailo Aksonov - Yevhenia Mitriakhina - Daniil Minakov
+Mykhailo Aksonov - Yevhenia Mitriakhina - Daniil Minakov - Iryna Pavliuk
 :::
 :::
 
@@ -888,7 +895,7 @@ ggplot(earnings_data[earnings_data$railway_name=="SOUTHERN_RAILWAYS",],mapping =
 
 ::: {.footer style="height:55px;background-color:lightgray;z-index:-1;bottom:0%"}
 ::: footer
-Mykhailo Aksonov - Yevhenia Mitriakhina - Daniil Minakov
+Mykhailo Aksonov - Yevhenia Mitriakhina - Daniil Minakov - Iryna Pavliuk
 :::
 :::
 
@@ -904,14 +911,14 @@ Judging by estimation results, our recommendations are:
 
 ::: {.fragment}
 Southern Railway freight tariff has to be increased
-:::
 
+Lwiv Railway freight tariff has to be increased
+:::
+\
 ::: {.fragment}
 Donetsk Railway freight tariff is optimal
 
 Pridniprovska Railway freight tariff is optimal
-
-Lwiv Railway freight tariff is optimal
 
 Odessa Railway freight tariff is optimal
 
@@ -922,7 +929,7 @@ South-Western Railway freight tariff is optimal
 
 ::: {.footer style="height:55px;background-color:lightgray;z-index:-1;bottom:0%"}
 ::: footer
-Mykhailo Aksonov - Yevhenia Mitriakhina - Daniil Minakov
+Mykhailo Aksonov - Yevhenia Mitriakhina - Daniil Minakov - Iryna Pavliuk
 :::
 :::
 
