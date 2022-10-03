@@ -1,6 +1,6 @@
 ---
 title: "Capstone Project"
-author: "Mykhailo Aksonov - Yevhenia Mitriakhina - Daniil Minakov - Iryna Pavliuk - Iryna Pavliuk"
+author: "Mykhailo Aksonov - Yevhenia Mitriakhina - Daniil Minakov - Iryna Pavliuk"
 format:
   revealjs:
     navigation-mode: linear
@@ -912,9 +912,11 @@ Judging by estimation results, our recommendations are:
 ::: {.fragment}
 Southern Railway freight tariff has to be increased
 
-Lwiv Railway freight tariff has to be increased
+Lviv Railway freight tariff has to be increased
 :::
+
 \
+
 ::: {.fragment}
 Donetsk Railway freight tariff is optimal
 
