@@ -1,5 +1,7 @@
 project:
   title: "CapstoneProject"
   theme: cosmo
+  render: 
+    - index.qmd
 
 editor: visual
