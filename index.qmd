@@ -15,10 +15,428 @@ editor: visual
 
 ------------------------------------------------------------------------
 
-::: {style="font-size:45px; color: grey"}
-Methodology
+::: {style="font-size:65px; text-align: center"}
+Transport mode choice analysis
+:::
+
+::: {style="font-size:45px; color: grey; text-align: center"}
+Part I
+:::
+
+![](mode.png){fig-align="center"}
 
 ------------------------------------------------------------------------
+
+::: {style="font-size:45px; color: grey"}
+Data
+:::
+
+:::{style="font-size:25px"}
+
++-------+----------+----------+-----------+----------+----------+-----+----------+--------+
+|       |    GC    |   TTME   |   INVC    |   INVT   |   HINC   |  N  |    p     | True p |
++======:+:========:+:========:+:=========:+:========:+:========:+:===:+:========:+:======:+
+|   Air | 102.6476 | 61.00952 | 85.25238  | 133.7095 | 34.54762 | 58  | 0.276190 |  0.28  |
+|       | 113.5517 | 46.53448 | 97.56897  | 124.8276 | 41.72414 |     |          |        |
++-------+----------+----------+-----------+----------+----------+-----+----------+--------+
+| Train |  130.2   | 35.69048 |  51.3381  | 608.2857 | 34.54762 | 63  |   0.3    |  0.13  |
+|       | 106.619  | 28.52381 |  37.46032 | 532.6667 | 23.06349 |     |          |        |
++-------+----------+----------+-----------+----------+----------+-----+----------+--------+
+|   Bus | 115.2571 | 41.65714 | 33.45714  | 629.4619 | 34.54762 | 30  | 0.142857 |  0.09  |
+|       | 108.1333 |   25.2   |  33.73333 | 618.8333 |   29.7   |     |          |        |
++-------+----------+----------+-----------+----------+----------+-----+----------+--------+
+|   Car | 95.41429 |          | 20.99524  | 573.2048 | 34.54762 | 59  | 0.280952 |  0.64  |
+|       | 89.08475 |          | 15.64407  | 527.3729 | 42.22034 |     |          |        |
++-------+----------+----------+-----------+----------+----------+-----+----------+--------+
+
+:::
+
+::: {style="font-size:35px"}
+
+Where GC is generalized cost, INVC is in-vehicle cost, INVT is in in-vehicle time, TTME is terminal time and HINC is income.
+
+:::
+
+::: {.footer style="height:55px;background-color:lightgray;z-index:-1;bottom:0%"}
+::: footer
+Mykhailo Aksonov - Yevhenia Mitriakhina - Daniil Minakov - Iryna Pavliuk
+:::
+:::
+
+------------------------------------------------------------------------
+
+::: {style="font-size:45px; color: grey"}
+Multinomial Logit estimation
+:::
+
+::: {style="font-size:35px"}
+Multinimial logit for unrestricted and choice based samples are estimated by incorporating true-probability based weights
+:::
+
+::: columns
+::: column
+::: {style="font-size:25px"}
+
+```{r}
+#| warning: false
+#| echo: false
+
+library(plm)
+library(car)
+library(stargazer)
+library(readxl)
+library(ggplot2)
+library(dplyr)
+library(ggthemes)
+library(extrafont)
+library(remotes)
+library(nnet)
+library(margins)
+library(mlogit)
+
+###############
+# DATA IMPORT #
+###############
+
+data("TravelMode", package = "AER")
+
+##############
+# TABLE 18.3 #
+##############
+
+# boolean column of choice 
+TravelMode$choice_accepted <- TravelMode$choice == "yes"
+# income of those who choose air
+TravelMode$incair <- with(TravelMode, income * (mode == "air"))
+
+#Unweighted Sample Model
+US_model<- mlogit(choice_accepted ~ gcost + wait + incair, data = TravelMode, shape = "long", reflevel = "car")
+
+
+#weights calculation
+
+#calculate in-sample probabilities
+TravelMode$p<-NA
+TravelMode[TravelMode$mode=="car","p"]<-4*nrow(TravelMode[(TravelMode$mode=="car" & TravelMode$choice=="yes"),])/nrow(TravelMode)
+TravelMode[TravelMode$mode=="air","p"]<-4*nrow(TravelMode[(TravelMode$mode=="air" & TravelMode$choice=="yes"),])/nrow(TravelMode)
+TravelMode[TravelMode$mode=="train","p"]<-4*nrow(TravelMode[(TravelMode$mode=="train" & TravelMode$choice=="yes"),])/nrow(TravelMode)
+TravelMode[TravelMode$mode=="bus","p"]<-4*nrow(TravelMode[(TravelMode$mode=="bus" & TravelMode$choice=="yes"),])/nrow(TravelMode)
+
+#add population statistics
+TravelMode$tp<-NA
+TravelMode[TravelMode$mode=="car","tp"]<-0.64
+TravelMode[TravelMode$mode=="air","tp"]<-0.14
+TravelMode[TravelMode$mode=="train","tp"]<-0.13
+TravelMode[TravelMode$mode=="bus","tp"]<-0.09
+
+#calculate weights for each transport mode
+TravelMode$w<-NA
+TravelMode$w<-TravelMode$tp/TravelMode$p
+
+#store weights as numbers
+wcar<- TravelMode[TravelMode$mode=="car","w"][1]
+wair<- TravelMode[TravelMode$mode=="air","w"][1]
+wtrain<- TravelMode[TravelMode$mode=="train","w"][1]
+wbus<- TravelMode[TravelMode$mode=="bus","w"][1]
+
+#assign choice-based transport weigts to indiwiduals
+TravelMode$w<-NA
+TravelMode[TravelMode$individual %in% TravelMode[TravelMode$mode=="air" & TravelMode$choice=="yes","individual"], "w"] <- wair
+TravelMode[TravelMode$individual %in% TravelMode[TravelMode$mode=="car" & TravelMode$choice=="yes","individual"], "w"] <- wcar
+TravelMode[TravelMode$individual %in% TravelMode[TravelMode$mode=="train" & TravelMode$choice=="yes","individual"], "w"] <- wtrain
+TravelMode[TravelMode$individual %in% TravelMode[TravelMode$mode=="bus" & TravelMode$choice=="yes","individual"], "w"] <- wbus
+
+#model with choice-bases corrections
+CBW_model<- mlogit(choice_accepted ~ gcost + wait + incair, data = TravelMode, shape = "long", weights=TravelMode$w, alt.var = "mode", reflevel = "car")
+
+#output
+stargazer(CBW_model,US_model,type = "text",single.row = TRUE, column.labels = c("Choise-Based","Unweighted"),dep.var.caption = "Accepted Choice", dep.var.labels.include = FALSE, covariate.labels = c("a(Air)","a(Train)","a(Bus)","b(GC)","b(TTME)","b(HINC for Air)"),report = "vct*")
+
+```
+:::
+
+:::
+
+::: column
+
+::: {style="font-size:35px"}
+As sample shares to dot differ significantly from the population proportions, effect on estimated parameters is modest.
+:::
+
+:::
+
+:::
+
+::: {.footer style="height:55px;background-color:lightgray;z-index:-1;bottom:0%"}
+::: footer
+Mykhailo Aksonov - Yevhenia Mitriakhina - Daniil Minakov - Iryna Pavliuk
+:::
+:::
+
+
+------------------------------------------------------------------------
+
+::: {style="font-size:45px; color: grey"}
+Predicted choices
+:::
+
+::: {style="font-size:35px"}
+We than evaluate predicted choices based on fitted probabilities.
+:::
+
+
+```{r, out.width="100%", fig.align='center'}
+#| warning: false
+#| echo: false
+
+#unweighted
+US_matrix<-round(rowsum(US_model[["probabilities"]],as.vector(TravelMode[TravelMode$choice=="yes","mode"])))[c("air","train","bus","car"),c("car","bus","train","air")]
+#weighted
+CBW_matrix<-round(rowsum(CBW_model[["probabilities"]],as.vector(TravelMode[TravelMode$choice=="yes","mode"])))[c("air","train","bus","car"),c("car","bus","train","air")]
+
+library(reshape2)
+library(gridExtra)
+
+
+p1<-ggplot(data = melt(US_matrix), aes(x=Var1, y=Var2, fill=value)) + 
+  geom_tile()+
+  geom_text(aes(Var1, Var2, label=value), colour = "white", check_overlap = TRUE)+
+  labs(
+    title = "Unrestricted sample",
+    x = "Predicted",
+    y = "Actual"
+  )+
+  theme_bw(base_size = 14, base_family = "Segoe UI Light")+
+  theme(legend.position = "none")+
+  coord_equal()
+p2<-ggplot(data = melt(CBW_matrix), aes(x=Var1, y=Var2, fill=value)) + 
+  geom_tile()+
+  geom_text(aes(Var1, Var2, label=value), colour = "white", check_overlap = TRUE)+
+  labs(
+    title = "Choice-Based sample",
+    x = "Predicted",
+    y = "Actual"
+  )+
+  theme_bw(base_size = 14, base_family = "Segoe UI Light")+
+  theme(legend.position = "none")+
+  coord_equal()
+
+grid.arrange(p1,p2,ncol=2)
+
+```
+
+::: {.footer style="height:55px;background-color:lightgray;z-index:-1;bottom:0%"}
+::: footer
+Mykhailo Aksonov - Yevhenia Mitriakhina - Daniil Minakov - Iryna Pavliuk
+:::
+:::
+
+
+------------------------------------------------------------------------
+
+::: {style="font-size:45px; color: grey"}
+IIA hypothesis
+:::
+
+::: {style="font-size:35px"}
+Asymptotic covariance matrices are then calculated and Hausman test is conducted, and with Chi-squared 33.3 IIA is rejected.
+:::
+
+```{r, out.width="100%", fig.align='center'}
+#| warning: false
+#| echo: false
+#| out-height: 450px
+
+
+#restricted choice set
+FC_model <- mlogit(choice ~ gcost + wait, TravelMode, reflevel = "car",
+                   alt.subset = c("car", "bus", "train"))
+
+#asymptotic covariance restricted
+asm_FC<-vcov(FC_model)
+asm_FC[upper.tri(asm_FC)]<-NA
+
+#asymptotic covariance full
+asm_US<-vcov(US_model)[2:5,2:5]
+asm_US[upper.tri(asm_US)]<-NA
+
+#Hausman test
+iia<-hmftest(US_model,FC_model)
+
+p1<-ggplot(data = melt(asm_US, na.rm = T), aes(x=Var1, y=Var2, fill=value)) + 
+  geom_tile()+
+  geom_text(aes(Var1, Var2, label=round(value,4)), colour = "white", check_overlap = TRUE)+
+  labs(
+    title = "Unrestricted Set"
+  )+
+  theme_bw(base_size = 14, base_family = "Segoe UI Light")+
+  theme(legend.position = "none",
+        axis.ticks.x=element_blank(),
+        axis.ticks.y=element_blank(),
+        axis.title = element_blank(),
+        axis.text.x =  element_blank())+
+  coord_equal()+
+  scale_x_discrete(limits=rev)
+
+p2<-ggplot(data = melt(asm_FC, na.rm = T), aes(x=Var1, y=Var2, fill=value)) + 
+  geom_tile()+
+  geom_text(aes(Var1, Var2, label=round(value,4)), colour = "white", check_overlap = TRUE)+
+  labs(
+    title = "Restricted-Choice Set"
+  )+
+  theme_bw(base_size = 14, base_family = "Segoe UI Light")+
+  theme(legend.position = "none",
+        axis.ticks.x=element_blank(),
+        axis.ticks.y=element_blank(),
+        axis.title = element_blank(),
+        axis.text.x =  element_blank())+
+  coord_equal()+
+  scale_x_discrete(limits=rev)
+
+grid.arrange(p1,p2, ncol=2)
+
+
+```
+
+::: {.footer style="height:55px;background-color:lightgray;z-index:-1;bottom:0%"}
+::: footer
+Mykhailo Aksonov - Yevhenia Mitriakhina - Daniil Minakov - Iryna Pavliuk
+:::
+:::
+
+
+------------------------------------------------------------------------
+
+::: {style="font-size:45px; color: grey"}
+Nested Logit
+:::
+
+::: {style="font-size:35px"}
+As IIA was rejected, nested logit model is then estimated
+:::
+
+```{r}
+#| warning: false
+#| echo: false
+
+# FIML estimate
+FIML_model <- mlogit(choice_accepted ~ gcost + wait + incair, data = TravelMode, shape = "long", choice = "choice", alt.var = "mode", reflevel = "car", nests = list(fly = "air", ground = c("bus", "car", "train")), unscaled = TRUE)
+
+#sigmas
+sigma_fly.fiml = as.numeric(sqrt(pi^2 / (6*(FIML_model$coefficients["iv:fly"]^2))))
+sigma_ground.fiml = as.numeric(sqrt(pi^2 / (6*(FIML_model$coefficients["iv:ground"]^2))))
+
+# Unconditional model estimate
+UNCOND_model <- mlogit(choice_accepted ~ gcost + wait + incair, data = TravelMode, shape = "long", choice = "choice", alt.var = "mode", reflevel = "car", unscaled = TRUE)
+
+#sigmas
+sigma_fly.un = sqrt(pi^2 / 6)
+sigma_ground.un = sqrt(pi^2 / 6)
+
+stargazer(FIML_model,UNCOND_model,type = "text",single.row = TRUE, column.labels = c("FIML","Unconditional"),dep.var.caption = "Accepted Choice", dep.var.labels.include = FALSE)
+
+```
+
+
+::: {.footer style="height:55px;background-color:lightgray;z-index:-1;bottom:0%"}
+::: footer
+Mykhailo Aksonov - Yevhenia Mitriakhina - Daniil Minakov - Iryna Pavliuk
+:::
+:::
+
+------------------------------------------------------------------------
+
+::: {style="font-size:45px; color: grey"}
+HEV
+:::
+
+::: {style="font-size:35px"}
+At last, HEV models are estimated to test heteroscedasticity relaxation assumptions
+:::
+
+```{r}
+#| warning: false
+#| echo: false
+
+
+#HEV model 
+HEV_model <- mlogit(choice_accepted ~ gcost + wait + incair, data = TravelMode,
+                    shape = "long", choice = "choice", alt.var = "mode", 
+                    reflevel = "car", heterosc = TRUE)
+
+#heteroscedastic HEV 
+#there is no capacity in mlogit() to control individual-based heteroscedasticity
+
+#restricted HEV
+HEV_RS_model <- mlogit(choice_accepted ~ gcost + wait + incair, data = TravelMode,
+                       shape = "long", choice = "choice", alt.var = "mode",
+                       reflevel = "car", heterosc = TRUE, alt.subset = c("car", "bus", "air", "train"),
+                       constPar = c("sp.train" = 1, "sp.bus" = 1))
+
+#Nested Logit
+NL_model <- mlogit(
+  choice ~ wait + gcost + incair, TravelMode, reflevel="car",
+  nests = list(fly = "air", ground = c("train", "bus", "car")),
+  unscaled = T
+)
+
+
+stargazer(HEV_model,HEV_RS_model,NL_model,type = "text",single.row = TRUE, column.labels = c("HEV","Restricted HEV", "Nested Logit"),dep.var.caption = "Accepted Choice", dep.var.labels.include = FALSE)
+
+```
+
+::: {.footer style="height:55px;background-color:lightgray;z-index:-1;bottom:0%"}
+::: footer
+Mykhailo Aksonov - Yevhenia Mitriakhina - Daniil Minakov - Iryna Pavliuk
+:::
+:::
+
+------------------------------------------------------------------------
+
+::: {style="font-size:45px; color: grey"}
+Final Remarks
+:::
+
+::: {style="font-size:35px"}
+
+::: fragment
+None of the estimation results suggest preference to one model or another, as likelyhood values are not comparable.
+:::
+
+::: fragment
+However it is crucial to relax the IIA assumption.
+:::
+
+::: fragment
+The random parameters model has a significant advantage, and allows a much richer 
+specification of the utility function. 
+:::
+
+:::
+
+
+::: {.footer style="height:55px;background-color:lightgray;z-index:-1;bottom:0%"}
+::: footer
+Mykhailo Aksonov - Yevhenia Mitriakhina - Daniil Minakov - Iryna Pavliuk
+:::
+:::
+
+------------------------------------------------------------------------
+
+::: {style="font-size:65px; text-align: center"}
+Ukrainian Railway freight cost analysis
+:::
+
+::: {style="font-size:45px; color: grey; text-align: center"}
+Part II
+:::
+
+![](freight.png){fig-align="center"}
+
+------------------------------------------------------------------------
+
+::: {style="font-size:45px; color: grey"}
+Methodology
 :::
 
 ::: {style="font-size:35px"}
@@ -39,8 +457,6 @@ Mykhailo Aksonov - Yevhenia Mitriakhina - Daniil Minakov - Iryna Pavliuk
 
 ::: {style="font-size:45px; color: grey"}
 Methodology
-
-------------------------------------------------------------------------
 :::
 
 ::: {style="font-size:35px"}
@@ -71,16 +487,6 @@ For the purpose of this task we have used UZ quartely financial statistics from 
 ```{r}
 #| warning: false
 #| echo: false
-
-library(plm)
-library(car)
-library(stargazer)
-library(readxl)
-library(ggplot2)
-library(dplyr)
-library(ggthemes)
-library(extrafont)
-library(remotes)
 
 railway_data <- read_excel("railway_data.xlsx")
 
@@ -307,7 +713,6 @@ ggplot(railway_data[railway_data$railway_name=="SOUTHERN_RAILWAYS",],mapping=aes
 
 ```
 :::
-
 
 ::: {.footer style="height:55px;background-color:lightgray;z-index:-1;bottom:0%"}
 ::: footer
@@ -694,9 +1099,7 @@ stargazer(model, type = "text",
 ::: {.column width="30%"}
 As we can see, all coefficients sum to 1, but this has to be checked
 :::
-
 :::
-
 :::
 
 ::: {.footer style="height:55px;background-color:lightgray;z-index:-1;bottom:0%"}
@@ -704,7 +1107,6 @@ As we can see, all coefficients sum to 1, but this has to be checked
 Mykhailo Aksonov - Yevhenia Mitriakhina - Daniil Minakov - Iryna Pavliuk
 :::
 :::
-
 
 ------------------------------------------------------------------------
 
@@ -714,6 +1116,7 @@ Results
 
 ::: {style="font-size:35px"}
 Test linear hypothesis:
+
 ```{r}
 
 #| warning: false
@@ -722,10 +1125,8 @@ linearHypothesis(model, "log(plc) + log(puc) + log(pcc) + log(Q) = 1" )
 
 ```
 
-We fail to reject the null, so our coefficients are OK. 
+We fail to reject the null, so our coefficients are OK.
 :::
-
-
 
 ::: {.footer style="height:55px;background-color:lightgray;z-index:-1;bottom:0%"}
 ::: footer
@@ -752,6 +1153,7 @@ earnings_data <- read_excel("earnings_data.xlsx",
 ::: {style="font-size:11px"}
 ::: panel-tabset
 ### Donetsk
+
 ```{r}
 #| warning: false
 #| echo: false
@@ -777,6 +1179,7 @@ ggplot(earnings_data[earnings_data$railway_name=="DONETSK_RAILWAY",],mapping = a
 ```
 
 ### Pridnidrovska
+
 ```{r}
 #| warning: false
 #| echo: false
@@ -798,7 +1201,9 @@ ggplot(earnings_data[earnings_data$railway_name=="PRIDNIPROVSKA_RAILWAY",],mappi
   
 
 ```
+
 ### Lviv
+
 ```{r}
 #| warning: false
 #| echo: false
@@ -820,7 +1225,9 @@ ggplot(earnings_data[earnings_data$railway_name=="LVIV_RAILWAY",],mapping = aes(
   
 
 ```
+
 ### Odessa
+
 ```{r}
 #| warning: false
 #| echo: false
@@ -842,7 +1249,9 @@ ggplot(earnings_data[earnings_data$railway_name=="ODESSA_RAILWAY",],mapping = ae
   
 
 ```
+
 ### South-Western
+
 ```{r}
 #| warning: false
 #| echo: false
@@ -864,7 +1273,9 @@ ggplot(earnings_data[earnings_data$railway_name=="SOUTH-WESTERN RAILWAY",],mappi
   
 
 ```
+
 ### Southern
+
 ```{r}
 #| warning: false
 #| echo: false
@@ -888,17 +1299,13 @@ ggplot(earnings_data[earnings_data$railway_name=="SOUTHERN_RAILWAYS",],mapping =
 ```
 :::
 :::
-
 :::
-
-
 
 ::: {.footer style="height:55px;background-color:lightgray;z-index:-1;bottom:0%"}
 ::: footer
 Mykhailo Aksonov - Yevhenia Mitriakhina - Daniil Minakov - Iryna Pavliuk
 :::
 :::
-
 
 ------------------------------------------------------------------------
 
@@ -909,24 +1316,17 @@ Results
 ::: {style="font-size:35px"}
 Judging by estimation results, our recommendations are:
 
-::: {.fragment}
-Southern Railway freight tariff has to be increased
+\
 
-Lviv Railway freight tariff has to be increased
+::: fragment
+All railways tariffs are sub-optimal
 :::
 
 \
 
-::: {.fragment}
-Donetsk Railway freight tariff is optimal
-
-Pridniprovska Railway freight tariff is optimal
-
-Odessa Railway freight tariff is optimal
-
-South-Western Railway freight tariff is optimal
+::: fragment
+All railways freight tariffs have to be increased significantly
 :::
-
 :::
 
 ::: {.footer style="height:55px;background-color:lightgray;z-index:-1;bottom:0%"}
@@ -934,4 +1334,3 @@ South-Western Railway freight tariff is optimal
 Mykhailo Aksonov - Yevhenia Mitriakhina - Daniil Minakov - Iryna Pavliuk
 :::
 :::
-
